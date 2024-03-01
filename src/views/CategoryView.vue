@@ -58,7 +58,6 @@ function goBack() {
   display: flex;
   justify-content: center;
   padding: 20px 0;
-  position: absolute;
   bottom: 0;
   left: 0;
   margin-bottom: 80px;
