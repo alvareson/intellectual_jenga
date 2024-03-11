@@ -8,6 +8,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { initializeData } from "../main"
 
 const router = useRouter()
 const play = () => {
@@ -15,7 +16,8 @@ const play = () => {
 }
 
 function reset() {
-  console.log("Reset clicked")
+  localStorage.removeItem('quizData')
+  initializeData()
 }
 
 function result() {

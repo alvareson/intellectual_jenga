@@ -1,8 +1,13 @@
 <template>
   <div class="question-container">
-    <h2>{{ question }}</h2>
+    <h2>{{ questionText }}</h2>
     <div v-for="(answer, index) in answers" :key="index" class="answer">
-      <button class="answer-button">{{ answer }}</button>
+      <button
+        class="answer-button"
+        :class="{ 'correct': answer.isItCorrect, 'incorrect': !answer.isItCorrect }"
+      >
+        {{ answer.title }}
+      </button>
     </div>
 
     <div class="check-buttons">
@@ -17,38 +22,59 @@
 </template>
 
 <script setup>
-import {computed} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
-import * as questionData from '../data/questions.js'
-import * as answerData from '../data/answers.js'
+import {ref, onMounted, computed} from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
 
-const question = computed(() => {
-  const {category, questionNumber} = route.params
-  const questions = questionData[category]
-  const questionKey = Object.keys(questions)[questionNumber - 1]
-  return questions[questionKey]
+const quizData = ref({})
+
+onMounted(() => {
+  quizData.value = JSON.parse(localStorage.getItem('quizData') || '{}')
+})
+
+const questionText = computed(() => {
+  const { category, questionNumber } = route.params
+  const categoryQuestions = quizData.value[category] || []
+  const questionIndex = parseInt(questionNumber, 10) - 1
+  // console.log("categoryQuestions[questionIndex]?.question", categoryQuestions[questionIndex]?.question)
+  return categoryQuestions[questionIndex]?.question || "Not found"
 })
 
 const answers = computed(() => {
-  const {category, questionNumber} = route.params
-  const answerKey = `${category}${questionNumber}`
-  const answersObj = answerData[answerKey]
-  return Object.values(answersObj || {})
+  const { category, questionNumber } = route.params
+  const categoryQuestions = quizData.value[category] || []
+  const questionIndex = parseInt(questionNumber, 10) - 1
+  return categoryQuestions[questionIndex]?.answers || []
 })
+
+
 
 function goBack() {
   router.push({name: 'choice', params: {category: route.params.category}})
 }
 
 function markCheck() {
-  console.log("Check")
+  const { category, questionNumber } = route.params
+  const questionIndex = parseInt(questionNumber, 10) - 1
+  const categoryQuestions = quizData.value[category]
+
+  if (categoryQuestions && categoryQuestions.length > questionIndex) {
+    categoryQuestions[questionIndex].spoken = true
+    localStorage.setItem('quizData', JSON.stringify(quizData.value))
+  }
 }
 
 function markUncheck() {
-  console.log("Uncheck")
+  const { category, questionNumber } = route.params
+  const questionIndex = parseInt(questionNumber, 10) - 1
+  const categoryQuestions = quizData.value[category]
+
+  if (categoryQuestions && categoryQuestions.length > questionIndex) {
+    categoryQuestions[questionIndex].spoken = false
+    localStorage.setItem('quizData', JSON.stringify(quizData.value))
+  }
 }
 </script>
 
@@ -87,7 +113,6 @@ function markUncheck() {
   width: 80%;
   margin: 10px auto;
   padding: 15px 20px;
-  border: 2px solid hsla(160, 100%, 37%, 0.5);
   background-color: #f9f9f9;
   color: #333;
   border-radius: 10px;
@@ -95,6 +120,14 @@ function markUncheck() {
   text-align: left;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.correct {
+  border: 2px solid hsla(160, 100%, 37%, 0.5);
+}
+
+.incorrect {
+  border: 2px solid hsla(354, 97%, 48%, 0.5);
 }
 
 .answer-button:hover {
