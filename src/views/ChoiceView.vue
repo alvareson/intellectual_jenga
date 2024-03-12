@@ -1,14 +1,14 @@
 <template>
   <div class="choice-container">
-    <div class="buttons-row">
+    <div v-if="questions" class="buttons-row">
       <button
-          v-for="n in 12"
-          :key="n"
+          v-for="(question, index) in questions"
+          :key="index"
           class="choice-button"
-          :class="{ disabled: n > 3 }"
-          @click="selectQuestion(n)"
+          :class="{ 'disabled': question.spoken }"
+          @click="selectQuestion(index + 1)"
       >
-        Question {{ n }}
+        Question {{ index + 1 }}
       </button>
     </div>
 
@@ -20,23 +20,32 @@
 
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
+import { onMounted, ref } from 'vue'
 
 const router = useRouter()
 const route = useRoute()
+const questions = ref([])
 
-function goBack() {
-  router.push({ name: 'category' })
-}
+onMounted(() => {
+  const allQuizData = JSON.parse(localStorage.getItem('quizData'))
+  if (allQuizData && allQuizData[route.params.category]) {
+    questions.value = allQuizData[route.params.category]
+    console.log(questions.value)
+  }
+})
 
 function selectQuestion(questionNumber) {
-  if (questionNumber <= 3) {
+  const question = questions.value[questionNumber - 1]
+  if (question) {
     router.push({
       name: 'question',
       params: { category: route.params.category, questionNumber }
     })
-  } else {
-    // FOR TEST ONLY
   }
+}
+
+function goBack() {
+  router.push({ name: 'category' })
 }
 </script>
 
